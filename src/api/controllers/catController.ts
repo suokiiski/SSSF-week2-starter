@@ -18,6 +18,61 @@ import {User} from '../../types/DBTypes';
 import CustomError from '../../classes/CustomError';
 import rectangleBounds from '../../utils/rectangleBounds';
 
+const catGet = async (
+  req: Request<{id: string}>,
+  res: Response<Cat>,
+  next: NextFunction
+) => {
+  try {
+    const cat = await catModel.findById(req.params.id).populate({
+        path: 'owner',
+        select: '-__v -password -role',
+    });
+    if (!cat) {
+        throw new CustomError('Cat not found', 404);
+    }
+    res.json(cat);
+} catch (error) {
+    next(error);
+    }
+};
+
+const catListGet = async (
+  req: Request,
+  res: Response<Cat[]>,
+  next: NextFunction
+) => {
+  try {
+    const cats = await catModel.find().populate({
+        path: 'owner',
+        select: '-__v -password -role',
+    })
+    .populate({
+        path: 'location',
+    });
+    res.json(cats);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const catPost = async (
+  req: Request<{}, {}, Omit<Cat, '_id'>>,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    if (!req.body.location) {
+        req.body.location = res.locals.coordinates;
+    }
+    req.body.owner = res.locals.user._id;
+    const cat = await catModel.create(req.body); 
+    res.json({message: 'Cat created', data: cat});
+  } catch (error) {
+    next(error);
+  }
+};
+
 const catGetByUser = async (
   req: Request<{}, {}, User>,
   res: Response<Cat[]>,
@@ -154,60 +209,6 @@ const catPut = async (
   }
 };
 
-const catGet = async (
-  req: Request<{id: string}>,
-  res: Response<Cat>,
-  next: NextFunction
-) => {
-  try {
-    const cat = await catModel.findById(req.params.id).populate({
-        path: 'owner',
-        select: '-__v -password -role',
-    });
-    if (!cat) {
-        throw new CustomError('Cat not found', 404);
-    }
-    res.json(cat);
-} catch (error) {
-    next(error);
-    }
-};
-
-const catListGet = async (
-  req: Request,
-  res: Response<Cat[]>,
-  next: NextFunction
-) => {
-  try {
-    const cats = await catModel.find().populate({
-        path: 'owner',
-        select: '-__v -password -role',
-    })
-    .populate({
-        path: 'location',
-    });
-    res.json(cats);
-  } catch (error) {
-    next(error);
-  }
-};
-
-const catPost = async (
-  req: Request<{}, {}, Omit<Cat, '_id'>>,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    if (!req.body.location) {
-        req.body.location = res.locals.coordinates;
-    }
-    req.body.owner = res.locals.user._id;
-    const cat = await catModel.create(req.body); 
-    res.json({message: 'Cat created', data: cat});
-  } catch (error) {
-    next(error);
-  }
-};
 
 export {
   catGetByUser,

@@ -57,6 +57,7 @@ const userPost = async (
     if (!req.body.role) {
         req.body.role = 'user';
     }
+    console.log(req.body.role + 'User role in user post');
     const userInput = {
         user_name: req.body.user_name,
         email: req.body.email,
@@ -107,7 +108,7 @@ const userDeleteCurrent = async (
         res.locals.user._id
         )) as unknown as User;
     if (!user) {
-      throw new Error('User not found');
+      throw new CustomError('User not found', 404);
     }
 
     const userOutput: UserOutput = {
@@ -127,7 +128,7 @@ const checkToken = (
   next: NextFunction
     ) => {
         if (!res.locals.user) {
-            throw new CustomError('User not found', 403);
+            throw new CustomError('Unvalid token', 403);
         } else {
             const userOutput: UserOutput = {
                 _id: (res.locals.user as User)._id,
